@@ -978,16 +978,20 @@ function closeModal(modalSelector, windows) {
 function closeAllModals(windows) {
   // закрытие всех модальых окон на странице, когда их вызвано несколько
   windows.forEach(function (item) {
-    item.style.display = 'none';
+    item.style.display = 'none'; // добавление классов анимации для окон
+
+    item.classList.add('animated', 'fadeIn');
   });
   document.body.style.overflow = '';
   document.body.style.marginRight = "0px";
 }
 
 var modal = function modal() {
-  // closeClickOverlay - по умолчанию модальное окно закрывается при клике на подложку
+  var btnPressed = false; // для отслеживания клика на триггер
+  // destroy - вкл\выкл уничтожение тригера
+
   var bindModal = function bindModal(triggerSelector, modalSelector, closeSelector, modalTimerId) {
-    var closeClickOverlay = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+    var destroy = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
     var trigger = document.querySelectorAll(triggerSelector); // псевдомассив триггеров
 
     var modal = document.querySelector(modalSelector);
@@ -1001,6 +1005,12 @@ var modal = function modal() {
           e.preventDefault(); // отключение действий по умолчанию у элемента
         }
 
+        btnPressed = true; // когда кликнули на кнопку
+
+        if (destroy) {
+          item.remove();
+        }
+
         closeAllModals(windows);
         openModal(modalSelector, modalTimerId, scroll);
       });
@@ -1008,11 +1018,10 @@ var modal = function modal() {
 
     close.addEventListener('click', function () {
       closeModal(modalSelector, windows);
-    }); // закрытие по нажатию на подложку, а также если closeClickOverlay = true.
-    // нужно чтобы предотвратить закрытие в калькуляторе, во время расчетов пользователя
+    }); // закрытие по нажатию на подложку
 
     modal.addEventListener('click', function (e) {
-      if (e.target === modal && closeClickOverlay) {
+      if (e.target === modal) {
         closeModal(modalSelector, windows);
       }
     }); // закрытие по клавише esc
@@ -1039,14 +1048,34 @@ var modal = function modal() {
 
     div.remove();
     return scrollWidth;
+  } // функция для открытия модального окна, после того как пользователь долистал до конца страницы и не кликнул на триггер
+
+
+  function openByScroll(selector) {
+    window.addEventListener('scroll', function () {
+      // для совместимости с другими браузерами
+      var scrollHeight = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+
+      if (!btnPressed && // pageYOffset - отлистано px сверху. clientHeight - контент, который видно сейчас.
+      // scrollHeight - полная высота страницы. Последние два включают в себя только padding
+      window.pageYOffset + document.documentElement.clientHeight >= scrollHeight - 1) {
+        document.querySelector(selector).click(); // вызов события вручную (как-будто кликнули по окну)
+      }
+    });
   }
 
   var modalTimerId = setTimeout(function () {
-    return openModal('.popup-consultation', modalTimerId);
-  }, 2000);
+    // сюда также нужно поместить расчет скролла, потому что колбек не может взять значение извне
+    var scroll = calcScroll();
+    openModal('.popup-consultation', modalTimerId, scroll);
+  }, 20000);
   bindModal('.button-design', '.popup-design', '.popup-design .popup-close', modalTimerId); // кнопка подробнее об услуге
 
-  bindModal('.button-consultation', '.popup-consultation', '.popup-consultation .popup-close', modalTimerId);
+  bindModal('.button-consultation', '.popup-consultation', '.popup-consultation .popup-close', modalTimerId); // вызов подарка, если отмотали до самого низа
+
+  openByScroll('.fixed-gift'); // клик на подарок
+
+  bindModal('.fixed-gift', '.popup-gift', '.popup-gift .popup-close', modalTimerId, true);
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (modal);
