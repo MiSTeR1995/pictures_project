@@ -1,5 +1,4 @@
-// import checkNumInputs from './checkNumInputs';
-// import { closeAllModals } from './modal';
+import {postData} from '../services/requests';
 
 const forms = () => {
     const form = document.querySelectorAll('form');
@@ -21,17 +20,6 @@ const forms = () => {
     const path = {
         designer: 'assets/server.php',   // путь для формы с картинкой
         question: 'assets/question.php'  // путь для формы с вопросом
-    };
-    // async await - позволяет дождаться результата запроса
-    const postData = async (url, data) => {
-
-        let result = await fetch(url, {
-            method: 'POST',
-            body: data,
-        });
-
-        // тут тоже дождаться выполнения
-        return await result.text();
     };
 
     const clearInputs = () => {
